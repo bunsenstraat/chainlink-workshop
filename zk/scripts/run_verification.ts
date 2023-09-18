@@ -21,8 +21,8 @@ function hash(message: any): bigint {
 
 (async () => {
   try {
-    const r1cs = "http://127.0.0.1:8081/ipfs/QmbMk4ksBYLQzJ6TiZfzaALF8W11xvB8Wz6a2GrG9oDrXW";
-    const wasm = "http://127.0.0.1:8081/ipfs/QmUbpEvHHKaHEqYLjhn93S8rEsUGeqiTYgRjGPk7g8tBbz";     
+    const r1cs = "https://ipfs-cluster.ethdevops.io/ipfs/QmbMk4ksBYLQzJ6TiZfzaALF8W11xvB8Wz6a2GrG9oDrXW";
+    const wasm = "https://ipfs-cluster.ethdevops.io/ipfs/QmUbpEvHHKaHEqYLjhn93S8rEsUGeqiTYgRjGPk7g8tBbz";     
      
     const zkey_final = {
       type: "mem",
@@ -63,8 +63,8 @@ function hash(message: any): bigint {
     console.log('prepare signals')
     
     const signals = {
-            identityTrapdoor: identityTrapdoor2, // secrets[5].identityTrapdoor,
-            identityNullifier: identityNullifier2, // secrets[5].identityNullifier,
+            identityTrapdoor: secrets[5].identityTrapdoor,
+            identityNullifier: secrets[5].identityNullifier,
             treePathIndices: proof1.pathIndices,
             treeSiblings: proof1.siblings,
             externalNullifier: hash(42),

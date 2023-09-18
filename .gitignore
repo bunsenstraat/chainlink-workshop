@@ -1,2 +1,4 @@
 .deps
 contracts/artifacts
+zk/build
+semaphore/contracts/**/*/artifacts
