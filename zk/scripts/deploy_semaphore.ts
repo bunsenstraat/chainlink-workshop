@@ -16,6 +16,7 @@ const deploy = async (
       
     const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
 
+    // internal Remix method that resolves the artifacts and links the libraries
     let factory = await ethers.getContractFactory(contractName as any, null, {
         signer,
         libraries
@@ -29,11 +30,16 @@ const deploy = async (
     return contract
 }
 
-//0x9d83e140330758a8fFD07F8Bd73e86ebcA8a5692
 
 ;(async () => {
     try {
-        const verifierAddress = ''
+        const pairing = await deploy('Pairing', [])
+
+        console.log(pairing.address)
+
+        const verifier = await deploy('SemaphoreVerifier', [], { Pairing: pairing.address  })
+    
+        const verifierAddress = verifier.address
 
         const poseidonT3 = await deploy('PoseidonT3', [])
         console.log('PoseidonT3 at', poseidonT3.address)
