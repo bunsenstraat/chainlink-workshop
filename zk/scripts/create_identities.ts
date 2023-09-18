@@ -13,7 +13,7 @@ const identities = [];
             commitment: commitment.toString()
         })
     }
-    await remix.call('fileManager', 'setFile', './zk/build/identities.json', JSON.stringify([identities]) )
+    await remix.call('fileManager', 'setFile', './zk/build/identities.json', JSON.stringify([identities], null, '\t') )
   } catch (e) {
     console.error(e.message)
   }
