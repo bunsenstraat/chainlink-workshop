@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import { Identity } from "@semaphore-protocol/identity"
+import { ISemaphoreDeploymentData } from './types'
 
 const identities = [];
 const commmitments = []
@@ -37,9 +38,17 @@ const verifyMemberCount = async (sempahore_contract_address: any, admin: any, gr
 
     ; (async () => {
         try {
+
+            const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
+            const semaphore_deployment_data:ISemaphoreDeploymentData  = JSON.parse(semaphore_deployment)
+
+            const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
+
+            console.log(semaphore_deployment_data.semaphoreAddress)
+            
             const group_id = ethers.BigNumber.from(ethers.utils.randomBytes(32))
-            const admin = '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4'
-            const sempahore_contract_address = '0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47'
+            const admin = await signer.getAddress()
+            const sempahore_contract_address = semaphore_deployment_data.semaphoreAddress
 
             // create a new group in Semaphore
             await createGroup(sempahore_contract_address, admin , group_id)
@@ -66,7 +75,7 @@ const verifyMemberCount = async (sempahore_contract_address: any, admin: any, gr
             // verify we added them
             await verifyMemberCount(sempahore_contract_address, admin, group_id, commmitments.length)
 
-
+            
         } catch (e) {
             console.error(e.message)
         }
