@@ -70,5 +70,5 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
     console.log('groups:')
     console.log(groups)
 
-    await remix.call('fileManager', 'setFile', './zk/build/groups.json', JSON.stringify(groups, null, '\t'))
+    await remix.call('fileManager', 'setFile', './build/groups.json', JSON.stringify(groups, null, '\t'))
 })()

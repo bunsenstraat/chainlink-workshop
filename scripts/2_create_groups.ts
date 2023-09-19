@@ -67,7 +67,7 @@ const verifyMemberCount = async (sempahore_contract_address: any, admin: any, gr
 
 
             // store them so we can use them in our dApp
-            await remix.call('fileManager', 'setFile', './zk/build/identities.json', JSON.stringify([identities], null, '\t'))
+            await remix.call('fileManager', 'setFile', './build/identities.json', JSON.stringify([identities], null, '\t'))
 
             // add them all to the group
             await addMembers(sempahore_contract_address, admin, group_id, commmitments)
