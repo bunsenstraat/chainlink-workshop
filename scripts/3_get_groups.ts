@@ -27,6 +27,7 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
     const groupIds: any = []
 
     for (let groupCreated of groupsCreated) {
+        console.log(groupCreated)
         const group = await contract.groups(groupCreated.args[0])
 
         if (group[0] == signerAddress) {
