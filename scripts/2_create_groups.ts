@@ -46,11 +46,12 @@ const verifyMemberCount = async (sempahore_contract_address: any, admin: any, gr
 
             console.log(semaphore_deployment_data.semaphoreAddress)
             
-            const group_id = ethers.BigNumber.from(ethers.utils.randomBytes(32))
+ 
             const admin = await signer.getAddress()
             const sempahore_contract_address = semaphore_deployment_data.semaphoreAddress
 
             // create a new group in Semaphore
+            const group_id = ethers.BigNumber.from(ethers.utils.randomBytes(32))
             await createGroup(sempahore_contract_address, admin , group_id)
 
             // create some random identities
@@ -58,16 +59,18 @@ const verifyMemberCount = async (sempahore_contract_address: any, admin: any, gr
                 const identity = new Identity()
                 const { trapdoor, nullifier, commitment } = identity
                 identities.push({
-                    trapdoor: trapdoor.toString(),
+                    trapdoor: trapdoor.toString(), 
                     nullifier: nullifier.toString(),
-                    commitment: commitment.toString()
+                    commitment: commitment.toString(),
+                    data: identity.toString(), 
+                    group_id
                 })
                 commmitments.push(commitment.toString())
             }
 
 
-            // store them so we can use them in our dApp
-            await remix.call('fileManager', 'setFile', './build/identities.json', JSON.stringify([identities], null, '\t'))
+            // store them so we can use them in our dApp, it contains secrets, not for production use
+            await remix.call('fileManager', 'setFile', './build/identities.json', JSON.stringify(identities, null, '\t'))
 
             // add them all to the group
             await addMembers(sempahore_contract_address, admin, group_id, commmitments)
