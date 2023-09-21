@@ -5,7 +5,7 @@ import { BigNumber, utils } from 'ethers'
 import { SignalToBigNumber } from './helpers/convertsignal'
 
 ;(async () => {
-    const topic = 'hackergroup'
+    const topic = 'hackergroup' + Date.now()
     const message = 'QmYQU3F6MpxhwAjGLMrcf7Xt2u5PyuS1wrV1Upy1M8xGhL' // the CID in IPFS
     // get the first group from the file
     const groups = JSON.parse(
@@ -22,7 +22,7 @@ import { SignalToBigNumber } from './helpers/convertsignal'
     const identities = JSON.parse(
         await remix.call('fileManager', 'readFile', './build/identities.json'),
     )
-    console.log('using identity... ')
+    console.log('using identity... ', topic)
     console.log(identities[0].commitment)
     const identity = new Identity(identities[0].data)
 
