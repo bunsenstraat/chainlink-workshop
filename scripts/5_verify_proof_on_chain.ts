@@ -57,7 +57,7 @@ import { ISemaphoreDeploymentData } from './types'
             proof.proof,
         )
 
-        //console.log(result)
+        console.log(result)
     } catch (e) {
         console.log(e.message)
     }
