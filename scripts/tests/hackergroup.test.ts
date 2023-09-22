@@ -74,4 +74,29 @@ describe('Hackergroup', function () {
         console.log(result)
         expect(result.hash).to.not.null
     })
+
+    it('Fetches the bug associated with the signal', async function(){
+        const result = await hackergroup.bugs(proof.signal)
+        console.log(result)
+        expect(result[0]).to.equal(proof.signal)
+    })
+
+    it('Submit a new valid approval proof', async function () {
+        proof = await createProofForIdendity('hackergroup' + Date.now(), 'QmcuCKyokk9Z6f65ADAADNiS2R2xCjfRkv7mYBSWDwtA7M', false, null, null, null, 1)
+        // get the first group from the file
+        const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
+        const group_id = groups[0].group_id
+
+        console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
+        const result = await hackergroup.approveBug(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
+        console.log('verification by hackergroup...')
+        console.log(result)
+        expect(result.hash).to.not.null
+    })
+
+    it('Fetches the bug associated with the signal', async function(){
+        const result = await hackergroup.approvals(proof.signal)
+        console.log(result)
+        expect(result).to.equal(1)
+    })
 })

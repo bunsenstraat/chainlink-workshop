@@ -38,14 +38,7 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup {
         uint64 _paymentChainSelector,
         address _receiver
     ) external override {
-        //semaphore.verifyProof(
-        //    groupId,
-        //    merkleTreeRoot,
-        //    signal,
-        // nullifierHash,
-        // externalNullifier,
-        // proof
-        //);
+        semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
         bugs[signal] = Bugs(signal, _paymentChainSelector, _receiver, bugState.NEW, 0, 0);
     }
 
