@@ -5,19 +5,10 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
     console.log(await signer.getAddress())
     const signerAddress = await signer.getAddress()
 
-    const semaphore_deployment = await remix.call(
-        'fileManager',
-        'readFile',
-        'build/semaphore_deployment.json',
-    )
-    const semaphore_deployment_data: ISemaphoreDeploymentData =
-        JSON.parse(semaphore_deployment)
+    const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
+    const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
 
-    const contract = await ethers.getContractAt(
-        'Semaphore',
-        semaphore_deployment_data.semaphoreAddress,
-        signer,
-    )
+    const contract = await ethers.getContractAt('Semaphore', semaphore_deployment_data.semaphoreAddress, signer)
 
     //console.log(contract.filters)
 
@@ -31,12 +22,7 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
         const group = await contract.groups(groupCreated.args[0])
 
         if (group[0] == signerAddress) {
-            console.log(
-                'found group belonging to ' +
-                    signerAddress +
-                    'group id ' +
-                    groupCreated.args[0],
-            )
+            console.log('found group belonging to ' + signerAddress + 'group id ' + groupCreated.args[0])
             groupIds.push(groupCreated.args[0])
         }
     }
@@ -51,14 +37,11 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
 
         const group: IGroup = {
             group_id: groupId.toString(),
-            members: []
+            members: [],
         }
 
         for (let member of membersAdded) {
-            if (
-                member.args[0].toHexString() ==
-                BigNumber.from(groupId).toHexString()
-            ) {
+            if (member.args[0].toHexString() == BigNumber.from(groupId).toHexString()) {
                 console.log('found member ')
                 console.log(member.args[2].toString())
                 group.members.push(member.args[2].toString())

@@ -5,19 +5,10 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
     console.log(await signer.getAddress())
     const signerAddress = await signer.getAddress()
 
-    const semaphore_deployment = await remix.call(
-        'fileManager',
-        'readFile',
-        'build/semaphore_deployment.json',
-    )
-    const semaphore_deployment_data: ISemaphoreDeploymentData =
-        JSON.parse(semaphore_deployment)
+    const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
+    const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
 
-    const contract = await ethers.getContractAt(
-        'Semaphore',
-        semaphore_deployment_data.semaphoreAddress,
-        signer,
-    )
+    const contract = await ethers.getContractAt('Semaphore', semaphore_deployment_data.semaphoreAddress, signer)
 
     //console.log(contract.filters)
 
@@ -26,12 +17,6 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
 
     console.log(JSON.stringify(proofs_verified, null, '\t'))
 
-        // write it to the filesystem
-    await remix.call(
-        'fileManager',
-        'setFile',
-        './build/proofs_verified.json',
-        JSON.stringify(proofs_verified, null, '\t'),
-    )
-
+    // write it to the filesystem
+    await remix.call('fileManager', 'setFile', './build/proofs_verified.json', JSON.stringify(proofs_verified, null, '\t'))
 })()

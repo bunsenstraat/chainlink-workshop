@@ -4,9 +4,10 @@ import { poseidon } from "circomlibjs" // v0.0.8
 const snarkjs = require('snarkjs');
 
 const logger = {
-  info: (...args) => console.log(...args),
-  debug: (...args) => console.log(...args)
-};
+    info: (...args) => console.log(...args),
+    debug: (...args) => console.log(...args),
+    error: (...args) => console.error(...args),
+}
 
 /**
  * Creates a keccak256 hash of a message compatible with the SNARK scalar modulus.
@@ -35,7 +36,7 @@ function hash(message: any): bigint {
     // build list of identity commitments
     const secrets = []
     const identityCommitments = []
-    for (let k = 0; k < 10; k++) {      
+    for (let k = 0; k < 2; k++) {      
       const identityTrapdoor = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(32)))
       const identityNullifier = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(32)))
       secrets.push({identityTrapdoor, identityNullifier})
@@ -44,27 +45,27 @@ function hash(message: any): bigint {
       const identityCommitment = poseidon([secret])
       identityCommitments.push(identityCommitment)
     }
-    console.log('incremental tree')
+    //console.log('incremental tree', identityCommitments.map((x) => x.toString()))
     
     let tree
+  
     try {
       tree = new IncrementalMerkleTree(poseidon, 20, BigInt(0), 2, identityCommitments) // Binary tree.
     } catch (e) {
       console.error(e.message)
       return
     }
+    const index = tree.indexOf(identityCommitments[0])
 
-    let proof1 = tree.createProof(5)
+    console.log(index.toString())
+  
+    let proof1 = tree.createProof(0)
 
-    // test unknown commitment
-    const identityTrapdoor2 = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(32)))
-    const identityNullifier2 = BigInt(ethers.utils.hexlify(ethers.utils.randomBytes(32)))
-
-    console.log('prepare signals')
+    console.log('prepare signals for id ', identityCommitments[0].toString(), tree.indexOf(identityCommitments[0]), proof1.siblings.map((x)=> x.toString()))
     
     const signals = {
-            identityTrapdoor: secrets[5].identityTrapdoor,
-            identityNullifier: secrets[5].identityNullifier,
+            identityTrapdoor: secrets[0].identityTrapdoor,
+            identityNullifier: secrets[0].identityNullifier,
             treePathIndices: proof1.pathIndices,
             treeSiblings: proof1.siblings,
             externalNullifier: hash(42),
@@ -81,9 +82,11 @@ function hash(message: any): bigint {
     console.log('prove')
     const { proof, publicSignals } = await snarkjs.groth16.prove(zkey_final, wtns);
     
-    const verified = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+    const verified = await snarkjs.groth16.verify(vKey, publicSignals, proof, logger);
     console.log('zk proof validity', verified);
     proof1.root.toString() === publicSignals[0] ? console.log('merkle proof valid') : console.log('merkle proof invalid')
+
+    
     
   } catch (e) {
     console.error(e.message)
