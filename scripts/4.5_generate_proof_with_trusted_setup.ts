@@ -30,19 +30,11 @@ function hash(message: any): bigint {
         const topic = 'some topic'
         const message = 'I vote yes'
         // get the first group from the file
-        const groups = JSON.parse(
-            await remix.call('fileManager', 'readFile', './build/groups.json'),
-        )
+        const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
         const group = new Group(groups[0].group_id, 20, groups[0].members)
 
         // create idendity from the first member of the group
-        const identities = JSON.parse(
-            await remix.call(
-                'fileManager',
-                'readFile',
-                './build/identities.json',
-            ),
-        )
+        const identities = JSON.parse(await remix.call('fileManager', 'readFile', './build/identities.json'))
         console.log('using identity... ')
         console.log(identities[0].commitment)
 
@@ -53,32 +45,16 @@ function hash(message: any): bigint {
 
         // USE ZK TRUSTED SETUP
 
-        const r1cs =
-            'https://ipfs-cluster.ethdevops.io/ipfs/QmbMk4ksBYLQzJ6TiZfzaALF8W11xvB8Wz6a2GrG9oDrXW'
-        const wasm =
-            'https://ipfs-cluster.ethdevops.io/ipfs/QmUbpEvHHKaHEqYLjhn93S8rEsUGeqiTYgRjGPk7g8tBbz'
+        const r1cs = 'https://ipfs-cluster.ethdevops.io/ipfs/QmbMk4ksBYLQzJ6TiZfzaALF8W11xvB8Wz6a2GrG9oDrXW'
+        const wasm = 'https://ipfs-cluster.ethdevops.io/ipfs/QmUbpEvHHKaHEqYLjhn93S8rEsUGeqiTYgRjGPk7g8tBbz'
 
         const zkey_final = {
             type: 'mem',
-            data: new Uint8Array(
-                JSON.parse(
-                    await remix.call(
-                        'fileManager',
-                        'readFile',
-                        './zk/build/zk_setup.txt',
-                    ),
-                ),
-            ),
+            data: new Uint8Array(JSON.parse(await remix.call('fileManager', 'readFile', './zk/build/zk_setup.txt'))),
         }
         const wtns = { type: 'mem' }
 
-        const vKey = JSON.parse(
-            await remix.call(
-                'fileManager',
-                'readFile',
-                './zk/build/verification_key.json',
-            ),
-        )
+        const vKey = JSON.parse(await remix.call('fileManager', 'readFile', './zk/build/verification_key.json'))
 
         // build list of identity commitments
         const identityCommitments = groups[0].members
@@ -87,13 +63,7 @@ function hash(message: any): bigint {
 
         let tree
         try {
-            tree = new IncrementalMerkleTree(
-                poseidon,
-                20,
-                BigInt(0),
-                2,
-                identityCommitments,
-            ) // Binary tree.
+            tree = new IncrementalMerkleTree(poseidon, 20, BigInt(0), 2, identityCommitments) // Binary tree.
         } catch (e) {
             console.error(e.message)
             return
@@ -125,10 +95,7 @@ function hash(message: any): bigint {
         await snarkjs.wtns.check(r1cs, wtns, logger)
 
         console.log('prove')
-        const { proof, publicSignals } = await snarkjs.groth16.prove(
-            zkey_final,
-            wtns,
-        )
+        const { proof, publicSignals } = await snarkjs.groth16.prove(zkey_final, wtns)
 
         const semaphoreProof = {
             merkleTreeRoot: publicSignals[0],
@@ -140,17 +107,9 @@ function hash(message: any): bigint {
 
         console.log(JSON.stringify(semaphoreProof, null, '\t'))
 
-        const verified = await snarkjs.groth16.verify(
-            vKey,
-            publicSignals,
-            proof,
-            logger,
-        )
+        const verified = await snarkjs.groth16.verify(vKey, publicSignals, proof, logger)
         console.log('zk proof validity', verified)
-        verified
-            ? console.log('merkle proof valid')
-            : console.log('merkle proof invalid')
-
+        verified ? console.log('merkle proof valid') : console.log('merkle proof invalid')
     } catch (e) {
         console.error(e.message)
     }
