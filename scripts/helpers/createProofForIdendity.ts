@@ -5,14 +5,14 @@ import { BigNumber, utils } from 'ethers'
 import { SignalToBigNumber } from '../helpers/convertsignal'
 import { SemaphoreProof } from '../types/types'
 
-export const createProofForIdendity = async (_topic: string, _message: string, writeProof: boolean = true, _prooffile?: string, _indendity?: Identity, _group?: Group, _indendity_index?: number, _groupIndex?: number): Promise<SemaphoreProof> => {
-    if (!_message || !_topic) throw new Error('message and topic not set')
+export const createProofForIdendity = async (_cid: string, _signal: string, writeProof: boolean = true, _prooffile?: string, _indendity?: Identity, _group?: Group, _indendity_index?: number, _groupIndex?: number): Promise<SemaphoreProof> => {
+    if (!_signal || !_cid) throw new Error('message and topic not set')
 
-    const topic = _topic
-    const message = _message
+    const topic = _cid
+    const preSignal = _signal
 
     console.log('topic', topic)
-    console.log('message', message)
+    console.log('message', preSignal)
     // get the first group from the file
     const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
 
@@ -28,8 +28,8 @@ export const createProofForIdendity = async (_topic: string, _message: string, w
     console.log(identities[_indendity_index || 0].commitment)
     const identity = _indendity || new Identity(identities[_indendity_index || 0].data)
 
-    const signal = SignalToBigNumber(message)
-    const externalNullifier = utils.formatBytes32String(topic)
+    const signal = preSignal
+    const externalNullifier = SignalToBigNumber(topic)
 
     console.log('Creating proof with semaphore')
     /* this was & zkey was taken from https://www.trusted-setup-pse.org/ for a tree depth of 20 only!!
