@@ -42,48 +42,6 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup {
         bugs[signal] = Bugs(signal, _paymentChainSelector, _receiver, bugState.NEW, 0, 0);
     }
 
-    function approveBug(
-        uint256 groupId,
-        uint256 merkleTreeRoot,
-        uint256 signal,
-        uint256 nullifierHash,
-        uint256 externalNullifier,
-        uint256[8] calldata proof,
-        uint64 _paymentChainSelector,
-        address _receiver
-    ) external override {
-        // semaphore.verifyProof(
-        //     groupId,
-        //     merkleTreeRoot,
-        //     signal,
-        //     nullifierHash,
-        //     externalNullifier,
-        //     proof
-        // );
-        bugs[signal].approveCount++;
-    }
-
-    function rejectBug(
-        uint256 groupId,
-        uint256 merkleTreeRoot,
-        uint256 signal,
-        uint256 nullifierHash,
-        uint256 externalNullifier,
-        uint256[8] calldata proof,
-        uint64 _paymentChainSelector,
-        address _receiver
-    ) external override {
-        // semaphore.verifyProof(
-        //     groupId,
-        //     merkleTreeRoot,
-        //     signal,
-        //     nullifierHash,
-        //     externalNullifier,
-        //     proof
-        // );
-        bugs[signal].rejectCount++;
-    }
-
     function approvals(uint256 signal) public view returns (uint256) {
         require(bugs[signal].signal > 0, "bug does not exist");
         return bugs[signal].approveCount;
