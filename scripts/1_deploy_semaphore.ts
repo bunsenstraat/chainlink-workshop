@@ -11,6 +11,8 @@ import { CompilationResult, SourceWithTarget } from '@remixproject/plugin-api'
         console.log('compiling')
 
         await remix.call('solidity', 'compile' as any, 'semaphore/contracts/Semaphore.sol')
+        await remix.call('solidity', 'compile' as any, 'contracts/hackergroup.sol')
+        await remix.call('solidity', 'compile' as any, 'contracts/hackerClient.sol')
 
         setTimeout(async () => {
             await remix.call('solidity', 'compile' as any, 'semaphore/contracts/base/SemaphoreVerifier.sol')

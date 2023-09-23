@@ -32,3 +32,12 @@ export type PackedProof = [
     NumericString,
     NumericString
 ]
+
+export type IIdentity = {
+    trapdoor: any,
+    nullifier: any,
+    secret: any,
+    commitment: any,
+    data: any,
+    group_id: any
+}

@@ -1,8 +1,12 @@
 import { createProofForIdendity } from './helpers/createProofForIdendity'
 import { SemaphoreProof } from './types/types'
+import { ethers } from 'ethers'
+import { BigNumberToSignal } from './helpers/convertsignal'
 ;(async () => {
     try {
-        const proof: SemaphoreProof = await createProofForIdendity('hackegroup' + Date.now(), 'QmcuCKyokk9Z6f65ADAADNiS2R2xCjfRkv7mYBSWDwtA7M', true, null, null, null, 1)
+        const n = ethers.BigNumber.from(ethers.utils.randomBytes(32))
+        const cid = BigNumberToSignal(n)
+        const proof: SemaphoreProof = await createProofForIdendity(cid, '0', true)
     } catch (e) {
         console.log(e.message)
     }

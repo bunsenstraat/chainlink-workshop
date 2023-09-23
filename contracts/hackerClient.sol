@@ -13,7 +13,7 @@ contract HackerClient is OwnerIsCreator, IHackerGroup {
         hackgergroup = IHackerGroup(_hackergroup);
     }
 
-    function submitBug(
+    function submit(
         uint256 groupId,
         uint256 merkleTreeRoot,
         uint256 signal,
@@ -23,32 +23,30 @@ contract HackerClient is OwnerIsCreator, IHackerGroup {
         uint64 _paymentChainSelector,
         address _receiver
     ) external override {
-        hackgergroup.submitBug(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+        hackgergroup.submit(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+    }
+    struct MyStruct {
+        string name;
+        uint[2] nums;
     }
 
-    function approveBug(
-        uint256 groupId,
-        uint256 merkleTreeRoot,
-        uint256 signal,
-        uint256 nullifierHash,
-        uint256 externalNullifier,
-        uint256[8] calldata proof,
-        uint64 _paymentChainSelector,
-        address _receiver
-    ) external override {
-        hackgergroup.approveBug(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+    function encode(
+        uint x,
+        address addr,
+        uint[] calldata arr,
+        MyStruct calldata myStruct
+    ) external pure returns (bytes memory) {
+        return abi.encode(x, addr, arr, myStruct);
     }
 
-    function rejectBug(
-        uint256 groupId,
-        uint256 merkleTreeRoot,
-        uint256 signal,
-        uint256 nullifierHash,
-        uint256 externalNullifier,
-        uint256[8] calldata proof,
-        uint64 _paymentChainSelector,
-        address _receiver
-    ) external override {
-        hackgergroup.approveBug(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+    function decode(
+        bytes calldata data
+    )
+        external
+        pure
+        returns (uint x, address addr, uint[] memory arr, MyStruct memory myStruct)
+    {
+        // (uint x, address addr, uint[] memory arr, MyStruct myStruct) = ...
+        (x, addr, arr, myStruct) = abi.decode(data, (uint, address, uint[], MyStruct));
     }
 }
