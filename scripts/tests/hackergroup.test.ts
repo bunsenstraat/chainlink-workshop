@@ -3,6 +3,7 @@ import { deploy } from '../helpers/deploy'
 import { ISemaphoreDeploymentData, SemaphoreProof } from '../types/types'
 import { createProofForIdendity } from '../helpers/createProofForIdendity'
 import { ethers } from 'ethers'
+import { BigNumberToSignal } from '../helpers/convertsignal'
 
 // to use this test you should first setup the contracts using
 // 1. deploy_sempahore
@@ -13,18 +14,16 @@ let hackergroup
 let semaphoreAddress
 let proof: SemaphoreProof
 let _paymentChainSelector = '16015286601757825753'
-let _receiver = '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4'
+let _receiver = ethers.Wallet.createRandom().address
+let cid
+const router = ethers.Wallet.createRandom() // some random address uses instead of the CCIP router
 
 describe('Hackergroup', function () {
     it('Deploys hackergroup', async function () {
-        console.log('compiling')
-        remix.off('solidity', 'compilationFinished')
-        await remix.call('solidity', 'compile' as any, 'contracts/hackergroup.sol')
-
         const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
         const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
         semaphoreAddress = semaphore_deployment_data.semaphoreAddress
-        hackergroup = await deploy('HackerGroup', [semaphore_deployment_data.semaphoreAddress])
+        hackergroup = await deploy('HackerGroup', [semaphore_deployment_data.semaphoreAddress, router.address])
         console.log('deploy done ', hackergroup.address)
         expect(hackergroup.address).to.not.null
     })
@@ -36,9 +35,11 @@ describe('Hackergroup', function () {
     })
 
     it('Creates a valid proof for onchain validating with semaphore', async function () {
-        proof = await createProofForIdendity('hackergroup' + Date.now(), 'QmcuCKyokk9Z6f65ADAADNiS2R2xCjfRkv7mYBSWDwtA7M', false, null, null, null, 1)
+        const n = ethers.BigNumber.from(ethers.utils.randomBytes(32))
+        cid = BigNumberToSignal(n)
+        proof = await createProofForIdendity(cid, '0', false)
     })
-
+ 
     it('Validates proof on chain', async function () {
         const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
         const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
@@ -63,39 +64,53 @@ describe('Hackergroup', function () {
     })
 
     it('Submit a new valid proof for onchain validating with hackergroup', async function () {
-        proof = await createProofForIdendity('hackergroup' + Date.now(), 'QmcuCKyokk9Z6f65ADAADNiS2R2xCjfRkv7mYBSWDwtA7M', false, null, null, null, 1)
+
         // get the first group from the file
         const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
         const group_id = groups[0].group_id
 
+        const n = ethers.BigNumber.from(ethers.utils.randomBytes(32))
+        cid = BigNumberToSignal(n)
+        // signal is 0, meaning we create a new bug
+        proof = await await createProofForIdendity(cid, '0', true, null, groups[0].members[0])
+
+
         console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
-        const result = await hackergroup.submitBug(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
+        const result = await hackergroup.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
         console.log('verification by hackergroup...')
         console.log(result)
         expect(result.hash).to.not.null
     })
 
-    it('Fetches the bug associated with the signal', async function(){
-        const result = await hackergroup.bugs(proof.signal)
+
+    it('Fetches the bug associated with the cid', async function(){
+        console.log('fetching ....', proof.externalNullifier)
+        const result = await hackergroup.bugs(proof.externalNullifier)
         console.log(result)
-        expect(result[0]).to.equal(proof.signal)
+        expect(result[0]).to.equal(proof.externalNullifier)
     })
 
-    it('Submit a new valid approval proof', async function () {
-        proof = await createProofForIdendity('hackergroup' + Date.now(), 'QmcuCKyokk9Z6f65ADAADNiS2R2xCjfRkv7mYBSWDwtA7M', false, null, null, null, 1)
+
+    it('Submit a new valid approval proof by the second member of the group', async function () {
+
         // get the first group from the file
         const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
         const group_id = groups[0].group_id
 
+        // signal is 1, meaning we approve the bug
+        proof = await createProofForIdendity(cid, '1', true, null, groups[0].members[1])
+        // get the first group from the file
+
         console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
-        const result = await hackergroup.approveBug(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
+        const result = await hackergroup.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
         console.log('verification by hackergroup...')
         console.log(result)
         expect(result.hash).to.not.null
     })
 
-    it('Fetches the bug associated with the signal', async function(){
-        const result = await hackergroup.approvals(proof.signal)
+
+    it('Fetches the bug associated with the cid', async function(){
+        const result = await hackergroup.approvals(proof.externalNullifier)
         console.log(result)
         expect(result).to.equal(1)
     })

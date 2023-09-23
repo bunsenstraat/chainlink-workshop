@@ -3,7 +3,7 @@ pragma solidity 0.8.4;
 
 /// @title HackerGroup contract interface.
 interface IHackerGroup {
-    function submitBug(
+    function submit(
         uint256 groupId,
         uint256 merkleTreeRoot,
         uint256 signal,

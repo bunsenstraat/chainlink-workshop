@@ -25,7 +25,7 @@ import { ISemaphoreDeploymentData } from './types'
         console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
 
         const result = await contract.verifyProof(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
-
+        console.log('verification....')
         console.log(result)
     } catch (e) {
         console.error(e.message)

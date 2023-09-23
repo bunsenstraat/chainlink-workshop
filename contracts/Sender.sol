@@ -52,6 +52,7 @@ contract Sender is OwnerIsCreator {
     ) external onlyOwner returns (bytes32 messageId) {
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         Client.EVM2AnyMessage memory evm2AnyMessage = Client.EVM2AnyMessage({
+            
             receiver: abi.encode(receiver), // ABI-encoded receiver address
             data: abi.encode(text), // ABI-encoded string
             tokenAmounts: new Client.EVMTokenAmount[](0), // Empty array indicating no tokens are being sent
