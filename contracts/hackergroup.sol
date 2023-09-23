@@ -46,8 +46,7 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         router = IRouterClient(_router);
     }
 
-    /// handle a received message
-    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {}
+
 
     // the externalNullifier is the CID encoded as a bigNumber, it needs to be decoded in javascript to use it.
     // the signal signifies what we want to do:
@@ -106,6 +105,9 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         // To access the amount of ether the contract has
         return address(this).balance;
     }
+
+    /// handle a received message
+    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {}
 
     /// @notice Transfer tokens to receiver on the destination chain.
     /// @notice Pay in native gas such as ETH on Ethereum or MATIC on Polgon.
