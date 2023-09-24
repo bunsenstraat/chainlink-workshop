@@ -15,6 +15,16 @@ contract HackerClient is OwnerIsCreator {
     LinkTokenInterface linkToken;
     IRouterClient router;
 
+    event bugCreated(uint256 externalNullifier);
+
+    event bugApproved(uint256 externalNullifier);
+
+    event bugRejected(uint256 externalNullifier);
+
+    event bugClosed(uint256 externalNullifier);
+
+    event messageReceived(uint256 externalNullifier);
+
     // Event emitted when a message is sent to another chain.
     event MessageSent(
         bytes32 indexed messageId, // The unique ID of the CCIP message.
@@ -38,8 +48,10 @@ contract HackerClient is OwnerIsCreator {
         sourceChain = _sourceChain;
         router = IRouterClient(_router);
         linkToken = LinkTokenInterface(_link);
-        hackergroup = _hackergroup;
+        hackergroup = _hackergroup; // IHackerGroup(_hackergroup);
     }
+
+    event messageSent(uint256 externalNullifier);
 
     function submit(
         uint256 groupId,
@@ -53,7 +65,9 @@ contract HackerClient is OwnerIsCreator {
     ) external returns (bytes32 messageId) {
         bytes memory message = abi.encode(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
 
+
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
+        /*
         Client.EVM2AnyMessage memory evm2AnyMessage = Client.EVM2AnyMessage({
             receiver: abi.encode(hackergroup), // ABI-encoded receiver address
             data: message, // ABI-encoded string
@@ -65,23 +79,36 @@ contract HackerClient is OwnerIsCreator {
             // Set the feeToken  address, indicating LINK will be used for fees
             feeToken: address(linkToken)
         });
+        */
+
+        Client.Any2EVMMessage memory m = Client.Any2EVMMessage({
+            messageId: 0x7465737400000000000000000000000000000000000000000000000000000000,
+            sourceChainSelector: _paymentChainSelector, // Source chain selector.
+            sender: abi.encode(msg.sender), // abi.decode(sender) if coming from an EVM chain.
+            data: message, // payload sent in original message.
+            destTokenAmounts: new Client.EVMTokenAmount[](0)
+        });
+
+        IHackerGroup(hackergroup).receiveMessage(m);
+        emit messageSent(externalNullifier);
 
         // Get the fee required to send the message
-        uint256 fees = router.getFee(destinationChain, evm2AnyMessage);
+        //uint256 fees = router.getFee(destinationChain, evm2AnyMessage);
 
-        if (fees > linkToken.balanceOf(address(this))) revert NotEnoughBalance(linkToken.balanceOf(address(this)), fees);
+        //if (fees > linkToken.balanceOf(address(this))) revert NotEnoughBalance(linkToken.balanceOf(address(this)), fees);
 
         // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK
-        linkToken.approve(address(router), fees);
+        //linkToken.approve(address(router), fees);
 
         // Send the message through the router and store the returned message ID
-        messageId = router.ccipSend(destinationChain, evm2AnyMessage);
+        //messageId = router.ccipSend(destinationChain, evm2AnyMessage);
 
+        //hackergroup.receiveMessage(evm2AnyMessage);
         // Emit an event with message details
-        emit MessageSent(messageId, destinationChain, hackergroup, message, address(linkToken), fees);
+        //emit MessageSent(messageId, destinationChain, hackergroup, message, address(linkToken), fees);
 
         // Return the message ID
-        return messageId;
+        return 0x7465737400000000000000000000000000000000000000000000000000000000;
     }
 
     struct MyStruct {

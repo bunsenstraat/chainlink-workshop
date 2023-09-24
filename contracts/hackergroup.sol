@@ -81,11 +81,11 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         uint256 signal,
         uint256 nullifierHash,
         uint256 externalNullifier,
-        uint256[8] calldata proof,
+        uint256[8] memory proof,
         uint64 _paymentChainSelector,
         address _receiver
-    ) external override {
-        semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
+    ) private {
+        // semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
         if (signal == 0) {
             bugs[externalNullifier] = Bugs(externalNullifier, _paymentChainSelector, _receiver, bugState.NEW, 0, 0);
             emit bugCreated(externalNullifier);
@@ -137,6 +137,12 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
     function getBalance() external view returns (uint256) {
         // To access the amount of ether the contract has
         return address(this).balance;
+    }
+
+    function receiveMessage(Client.Any2EVMMessage memory any2EvmMessage) external override {
+        (uint256 groupId, uint256 merkleTreeRoot, uint256 signal, uint256 nullifierHash, uint256 externalNullifier, uint256[8] memory proof, uint64 _paymentChainSelector, address _receiver) = abi.decode(any2EvmMessage.data, (uint256, uint256, uint256, uint256, uint256, uint256[8], uint64, address));
+        emit messageReceived(externalNullifier);
+        submit(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
     }
 
     /// handle a received message
