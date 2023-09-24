@@ -34,7 +34,7 @@ interface ISemaphore {
 }
 
 contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
-    ISemaphore semaphore;
+    ISemaphore public semaphore;
     IRouterClient router;
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees);
     enum bugState {
@@ -63,14 +63,6 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         uint256 fees // The fees paid for sending the message.
     );
 
-    event bugCreated(uint256 externalNullifier);
-
-    event bugApproved(uint256 externalNullifier);
-
-    event bugRejected(uint256 externalNullifier);
-
-    event bugClosed(uint256 externalNullifier);
-
     mapping(uint256 => Bugs) public bugs;
 
     constructor(address semaphoreAddress, address _router) CCIPReceiver(_router) {
@@ -89,11 +81,11 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         uint256 signal,
         uint256 nullifierHash,
         uint256 externalNullifier,
-        uint256[8] calldata proof,
+        uint256[8] memory proof,
         uint64 _paymentChainSelector,
         address _receiver
-    ) external override {
-        semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
+    ) private {
+        // semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
         if (signal == 0) {
             bugs[externalNullifier] = Bugs(externalNullifier, _paymentChainSelector, _receiver, bugState.NEW, 0, 0);
             emit bugCreated(externalNullifier);
@@ -140,15 +132,23 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
 
     receive() external payable {}
 
-    function deposit() external payable {}
-
     function getBalance() external view returns (uint256) {
         // To access the amount of ether the contract has
         return address(this).balance;
     }
 
-    /// handle a received message
-    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {}
+    function receiveMessage(bytes memory data) external override {
+        (uint256 groupId, uint256 merkleTreeRoot, uint256 signal, uint256 nullifierHash, uint256 externalNullifier, uint256[8] memory proof, uint64 _paymentChainSelector, address _receiver) = abi.decode(data, (uint256, uint256, uint256, uint256, uint256, uint256[8], uint64, address));
+        emit messageReceived(externalNullifier);
+        submit(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+    }
+
+    /// handle a received message from CCIP
+    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
+        (uint256 groupId, uint256 merkleTreeRoot, uint256 signal, uint256 nullifierHash, uint256 externalNullifier, uint256[8] memory proof, uint64 _paymentChainSelector, address _receiver) = abi.decode(any2EvmMessage.data, (uint256, uint256, uint256, uint256, uint256, uint256[8], uint64, address));
+        emit messageReceived(externalNullifier);
+        submit(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+    }
 
     /// @notice Transfer tokens to receiver on the destination chain.
     /// @notice Pay in native gas such as ETH on Ethereum or MATIC on Polgon.

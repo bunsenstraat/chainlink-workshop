@@ -20,6 +20,7 @@ contract Receiver is CCIPReceiver {
         string text // The text that was received.
     );
 
+
     bytes32 private lastReceivedMessageId; // Store the last received messageId.
     string private lastReceivedText; // Store the last received text.
 
