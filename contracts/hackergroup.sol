@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.8.4;
-import {ISemaphore} from "semaphore/contracts/interfaces/ISemaphore.sol";
+
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
 import {IHackerGroup} from "contracts/IHackerGroup.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
@@ -9,10 +9,34 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 
+interface ISemaphore {
+    /// @dev Returns the number of tree leaves of a group.
+    /// @param groupId: Id of the group.
+    /// @return Number of tree leaves.
+    function getNumberOfMerkleTreeLeaves(uint256 groupId) external view returns (uint256);
+
+    /// @dev Saves the nullifier hash to avoid double signaling and emits an event
+    /// if the zero-knowledge proof is valid.
+    /// @param groupId: Id of the group.
+    /// @param merkleTreeRoot: Root of the Merkle tree.
+    /// @param signal: Semaphore signal.
+    /// @param nullifierHash: Nullifier hash.
+    /// @param externalNullifier: External nullifier.
+    /// @param proof: Zero-knowledge proof.
+    function verifyProof(
+        uint256 groupId,
+        uint256 merkleTreeRoot,
+        uint256 signal,
+        uint256 nullifierHash,
+        uint256 externalNullifier,
+        uint256[8] calldata proof
+    ) external;
+}
+
 contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
-    ISemaphore public semaphore;
+    ISemaphore semaphore;
     IRouterClient router;
-    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); 
+    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees);
     enum bugState {
         NEW,
         APPROVED,
@@ -39,14 +63,20 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         uint256 fees // The fees paid for sending the message.
     );
 
+    event bugCreated(uint256 externalNullifier);
+
+    event bugApproved(uint256 externalNullifier);
+
+    event bugRejected(uint256 externalNullifier);
+
+    event bugClosed(uint256 externalNullifier);
+
     mapping(uint256 => Bugs) public bugs;
 
     constructor(address semaphoreAddress, address _router) CCIPReceiver(_router) {
         semaphore = ISemaphore(semaphoreAddress);
         router = IRouterClient(_router);
     }
-
-
 
     // the externalNullifier is the CID encoded as a bigNumber, it needs to be decoded in javascript to use it.
     // the signal signifies what we want to do:
@@ -66,11 +96,22 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
         if (signal == 0) {
             bugs[externalNullifier] = Bugs(externalNullifier, _paymentChainSelector, _receiver, bugState.NEW, 0, 0);
+            emit bugCreated(externalNullifier);
         } else if (signal == 1) {
             bugs[externalNullifier].approveCount++;
+            emit bugApproved(externalNullifier);
+            uint256 count = semaphore.getNumberOfMerkleTreeLeaves(groupId);
+            if (bugs[externalNullifier].approveCount > count / 2) {
+                emit bugClosed(externalNullifier);
+            }
         } else if (signal == 2) {
             bugs[externalNullifier].rejectCount++;
+            emit bugRejected(externalNullifier);
         }
+    }
+
+    function members(uint256 groupId) public view returns (uint256) {
+        return semaphore.getNumberOfMerkleTreeLeaves(groupId);
     }
 
     function approvals(uint256 externalNullifier) public view returns (uint256) {
