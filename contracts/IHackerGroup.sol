@@ -15,5 +15,5 @@ interface IHackerGroup {
 
     event messageReceived(uint256 externalNullifier);
 
-    function receiveMessage(Client.Any2EVMMessage memory any2EvmMessage) external;
+    function receiveMessage(bytes memory data) external;
 }

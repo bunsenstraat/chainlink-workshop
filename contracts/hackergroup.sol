@@ -132,21 +132,23 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
 
     receive() external payable {}
 
-    function deposit() external payable {}
-
     function getBalance() external view returns (uint256) {
         // To access the amount of ether the contract has
         return address(this).balance;
     }
 
-    function receiveMessage(Client.Any2EVMMessage memory any2EvmMessage) external override {
-        (uint256 groupId, uint256 merkleTreeRoot, uint256 signal, uint256 nullifierHash, uint256 externalNullifier, uint256[8] memory proof, uint64 _paymentChainSelector, address _receiver) = abi.decode(any2EvmMessage.data, (uint256, uint256, uint256, uint256, uint256, uint256[8], uint64, address));
+    function receiveMessage(bytes memory data) external override {
+        (uint256 groupId, uint256 merkleTreeRoot, uint256 signal, uint256 nullifierHash, uint256 externalNullifier, uint256[8] memory proof, uint64 _paymentChainSelector, address _receiver) = abi.decode(data, (uint256, uint256, uint256, uint256, uint256, uint256[8], uint64, address));
         emit messageReceived(externalNullifier);
         submit(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
     }
 
-    /// handle a received message
-    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {}
+    /// handle a received message from CCIP
+    function _ccipReceive(Client.Any2EVMMessage memory any2EvmMessage) internal override {
+        (uint256 groupId, uint256 merkleTreeRoot, uint256 signal, uint256 nullifierHash, uint256 externalNullifier, uint256[8] memory proof, uint64 _paymentChainSelector, address _receiver) = abi.decode(any2EvmMessage.data, (uint256, uint256, uint256, uint256, uint256, uint256[8], uint64, address));
+        emit messageReceived(externalNullifier);
+        submit(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+    }
 
     /// @notice Transfer tokens to receiver on the destination chain.
     /// @notice Pay in native gas such as ETH on Ethereum or MATIC on Polgon.
