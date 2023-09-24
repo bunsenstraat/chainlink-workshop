@@ -34,7 +34,7 @@ interface ISemaphore {
 }
 
 contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
-    ISemaphore semaphore;
+    ISemaphore public semaphore;
     IRouterClient router;
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees);
     enum bugState {
@@ -62,14 +62,6 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         address feeToken, // the token address used to pay CCIP fees.
         uint256 fees // The fees paid for sending the message.
     );
-
-    event bugCreated(uint256 externalNullifier);
-
-    event bugApproved(uint256 externalNullifier);
-
-    event bugRejected(uint256 externalNullifier);
-
-    event bugClosed(uint256 externalNullifier);
 
     mapping(uint256 => Bugs) public bugs;
 

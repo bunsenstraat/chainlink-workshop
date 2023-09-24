@@ -14,4 +14,11 @@ interface IHackerGroup {
         address _receiver
     ) external;
 
+    event bugCreated(uint256 externalNullifier);
+
+    event bugApproved(uint256 externalNullifier);
+
+    event bugRejected(uint256 externalNullifier);
+
+    event bugClosed(uint256 externalNullifier);
 }
