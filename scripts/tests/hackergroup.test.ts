@@ -20,7 +20,7 @@ const router = ethers.Wallet.createRandom() // some random address uses instead 
 
 describe('Hackergroup', function () {
     it('Deploys hackergroup', async function () {
-        const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
+        const semaphore_deployment = await remix.call('fileManager', 'readFile', 'data/semaphore_deployment.json')
         const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
         semaphoreAddress = semaphore_deployment_data.semaphoreAddress
         hackergroup = await deploy('HackerGroup', [semaphore_deployment_data.semaphoreAddress, router.address])
@@ -41,7 +41,7 @@ describe('Hackergroup', function () {
     })
  
     it('Validates proof on chain', async function () {
-        const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
+        const semaphore_deployment = await remix.call('fileManager', 'readFile', 'data/semaphore_deployment.json')
         const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
         const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
 

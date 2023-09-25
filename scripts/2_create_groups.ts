@@ -36,7 +36,7 @@ const verifyMemberCount = async (sempahore_contract_address: any, admin: any, gr
 
 ;(async () => {
     try {
-        const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
+        const semaphore_deployment = await remix.call('fileManager', 'readFile', 'data/semaphore_deployment.json')
         const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
 
         const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()

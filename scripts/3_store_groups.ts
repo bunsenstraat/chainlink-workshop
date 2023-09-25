@@ -5,7 +5,7 @@ import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
     console.log(await signer.getAddress())
     const signerAddress = await signer.getAddress()
 
-    const semaphore_deployment = await remix.call('fileManager', 'readFile', 'build/semaphore_deployment.json')
+    const semaphore_deployment = await remix.call('fileManager', 'readFile', 'data/semaphore_deployment.json')
     const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
 
     const contract = await ethers.getContractAt('Semaphore', semaphore_deployment_data.semaphoreAddress, signer)
