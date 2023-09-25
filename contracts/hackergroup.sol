@@ -85,17 +85,15 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         uint64 _paymentChainSelector,
         address _receiver
     ) private {
-        // semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
+        semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
         if (signal == 0) {
             bugs[externalNullifier] = Bugs(externalNullifier, _paymentChainSelector, _receiver, bugState.NEW, 0, 0);
             emit bugCreated(externalNullifier);
         } else if (signal == 1) {
             bugs[externalNullifier].approveCount++;
             emit bugApproved(externalNullifier);
-            uint256 count = semaphore.getNumberOfMerkleTreeLeaves(groupId);
-            if (bugs[externalNullifier].approveCount > count / 2) {
-                emit bugClosed(externalNullifier);
-            }
+            emit bugClosed(externalNullifier);
+            transferTokensPayNative(bugs[externalNullifier]._paymentChainSelector,bugs[externalNullifier]._receiver, 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05, 1000000000000000);
         } else if (signal == 2) {
             bugs[externalNullifier].rejectCount++;
             emit bugRejected(externalNullifier);
@@ -165,7 +163,7 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         address _receiver,
         address _token,
         uint256 _amount
-    ) external onlyOwner returns (bytes32 messageId) {
+    ) internal returns (bytes32 messageId) {
         // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
         // address(0) means fees are paid in native gas
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(_receiver, _token, _amount, address(0));

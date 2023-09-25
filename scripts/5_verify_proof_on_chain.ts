@@ -14,14 +14,14 @@ import { ISemaphoreDeploymentData } from './types'
         const contract = await ethers.getContractAt('Semaphore', sempahore_contract_address, signer)
 
         // load a proof
-        const proof = JSON.parse(await remix.call('fileManager', 'readFile', 'build/proof.json'))
+        const proofData = JSON.parse(await remix.call('fileManager', 'readFile', 'build/proof.json'))
+
+        const proof = proofData.fullProof
+        const group_id = proofData.group_id
 
         console.log('verifying proof on chain...')
         console.log(proof)
 
-        // get the first group from the file
-        const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
-        const group_id = groups[0].group_id
         console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
 
         const result = await contract.verifyProof(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
