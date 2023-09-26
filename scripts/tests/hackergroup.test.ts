@@ -150,4 +150,10 @@ describe('Hackergroup', function () {
         console.log('tokens transferred')
         console.log(JSON.stringify(tokens, null, '\t'))
     })
+
+    it('Check balance of hackergroup', async function () {
+        expect(await CCIPBNM.balanceOf(hackergroup.address)).to.equal(99)
+    })
+
+    
 })
