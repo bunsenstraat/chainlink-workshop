@@ -6,8 +6,10 @@ import { ethers } from 'ethers'
 import { BigNumberToSignal } from '../helpers/convertsignal'
 
 // to use this test you should first setup the contracts using
+// 0. compile scripts
 // 1. deploy_sempahore
 // 2. create groups
+// 2.1. add members
 // 3. store groups
 
 let hackergroup
@@ -71,7 +73,7 @@ describe('Hackergroup', function () {
         // get the first group from the file
         const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
         const group_id = groups[0].group_id
-        console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
+        console.log('using proof ...')
 
         const result = await contract.verifyProof(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
         console.log('verification...')
@@ -89,7 +91,7 @@ describe('Hackergroup', function () {
         // signal is 0, meaning we create a new bug
         proof = await await createProofForIdendity(cid, '0', true, null, groups[0].members[0])
 
-        console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
+        console.log('using proof ...')
         const result = await hackergroup.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
         console.log('verification by hackergroup...')
         console.log(result)
@@ -112,7 +114,7 @@ describe('Hackergroup', function () {
         proof = await createProofForIdendity(cid, '1', true, null, groups[0].members[1])
         // get the first group from the file
 
-        console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
+        console.log('using proof ...')
         const result = await hackergroup.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
         console.log('verification by hackergroup...')
         console.log(result)
@@ -154,6 +156,43 @@ describe('Hackergroup', function () {
     it('Check balance of hackergroup', async function () {
         expect(await CCIPBNM.balanceOf(hackergroup.address)).to.equal(99)
     })
+    it('gets the cids from the verified proofs', async () {
 
+        const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
+        const semaphore_deployment = await remix.call('fileManager', 'readFile', 'data/semaphore_deployment.json')
+        const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
+
+        const contract = await ethers.getContractAt('Semaphore', semaphore_deployment_data.semaphoreAddress, signer)
+
+        //console.log(contract.filters)
+
+        let eventFilter = contract.filters.ProofVerified()
+        let proofs_verified = await contract.queryFilter(eventFilter)
+
+        // write it to the filesystem
+        await remix.call('fileManager', 'setFile', './build/proofs_verified.json', JSON.stringify(proofs_verified, null, '\t'))
+
+        // build cids from it
+
+        const cids = []
+
+        const verified_proofs = JSON.parse(await remix.call('fileManager', 'readFile', './build/proofs_verified.json'))
+        for (let proof of verified_proofs) {
+            const cid = BigNumberToSignal(proof.args[3].hex)
+            const signal = proof.args[4].hex
+            cids.push({
+                date: Date.now(),
+                cid: cid,
+                signal
+            })
+
+            console.log(cids)
+            console.log('finding ', cid)
+            const index = cids.findIndex((x) => x.cid === cid)
+            expect(index).to.greaterThan(-1)
+
+        }
+
+    })
     
 })
