@@ -60,7 +60,7 @@ export const createProofForIdendity = async (_cid: string, _signal: string, writ
 
     // write it to the filesystem
     if (writeProof) {
-        await remix.call('fileManager', 'setFile', _prooffile || './build/proof.json', JSON.stringify(fullProof, null, '\t'))
+        await remix.call('fileManager', 'setFile', _prooffile || './build/proof.json', JSON.stringify({fullProof, group_id: group_with_member.group_id}, null, '\t'))
     }
     console.log('verifying proof off chain...')
     const result = await verifyProof(fullProof, 20)

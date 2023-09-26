@@ -11,12 +11,13 @@ import { BigNumberToSignal } from '../helpers/convertsignal'
 // 3. store groups
 
 let hackergroup
+let hackerclient
 let semaphoreAddress
+let CCIPBNM
 let proof: SemaphoreProof
 let _paymentChainSelector = '16015286601757825753'
 let _receiver
 let cid
-let CCIPBNM
 const router = ethers.Wallet.createRandom() // some random address uses instead of the CCIP router
 
 describe('Hackergroup', function () {
@@ -39,46 +40,22 @@ describe('Hackergroup', function () {
         console.log('deploy done ', hackergroup.address)
         expect(hackergroup.address).to.not.null
     })
+
     it('Mints token to hackergroup', async function () {
         await CCIPBNM.mint(hackergroup.address, 100)
         expect(await CCIPBNM.balanceOf(hackergroup.address)).to.equal(100)
     })
-
-    it('Gets the Semaphore adddress', async function () {
-        const address = await hackergroup.semaphore()
-        console.log(address)
-        expect(address).to.equal(semaphoreAddress)
-    })
-
-    it('Creates a valid proof for onchain validating with semaphore', async function () {
-        const n = ethers.BigNumber.from(ethers.utils.randomBytes(32))
-        cid = BigNumberToSignal(n)
-        proof = await createProofForIdendity(cid, '0', false)
-    })
-
-    it('Validates proof on chain', async function () {
+    it('Deploys hackerclient', async function () {
         const semaphore_deployment = await remix.call('fileManager', 'readFile', 'data/semaphore_deployment.json')
         const semaphore_deployment_data: ISemaphoreDeploymentData = JSON.parse(semaphore_deployment)
-        const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
-
-        const sempahore_contract_address = semaphore_deployment_data.semaphoreAddress
-
-        const contract = await ethers.getContractAt('Semaphore', sempahore_contract_address, signer)
-
-        console.log('verifying proof on chain...')
-        console.log(proof)
-
-        // get the first group from the file
-        const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
-        const group_id = groups[0].group_id
-        console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
-
-        const result = await contract.verifyProof(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
-        console.log('verification...')
-        console.log(result)
-        expect(result.hash).to.not.null
+        semaphoreAddress = semaphore_deployment_data.semaphoreAddress
+        // here we will simulate going between chains
+        const destChain = 2
+        const sourceChain = 1
+        hackerclient = await deploy('HackerClient', [destChain, sourceChain, hackergroup.address])
+        console.log('deploy done ', hackerclient.address)
+        expect(hackerclient.address).to.not.null
     })
-
     it('Submit a new valid proof for onchain validating with hackergroup', async function () {
         // get the first group from the file
         const groups = JSON.parse(await remix.call('fileManager', 'readFile', './build/groups.json'))
@@ -90,17 +67,27 @@ describe('Hackergroup', function () {
         proof = await await createProofForIdendity(cid, '0', true, null, groups[0].members[0])
 
         console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
-        const result = await hackergroup.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
-        console.log('verification by hackergroup...')
+        const result = await hackerclient.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
+        console.log('verification by hackerclient...')
         console.log(result)
         expect(result.hash).to.not.null
     })
-
     it('Fetches the bug associated with the cid', async function () {
         console.log('fetching ....', proof.externalNullifier)
         const result = await hackergroup.bugs(proof.externalNullifier)
         console.log(result)
         expect(result[0]).to.equal(proof.externalNullifier)
+    })
+    it('Reads the events from the contract', async function () {
+        const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
+        const contract = await ethers.getContractAt('HackerClient', hackerclient.address, signer)
+
+        let eventFilter = contract.filters.bugCreated()
+        let bugs = await contract.queryFilter(eventFilter)
+        expect(bugs.length).to.equal(1)
+
+        console.log('bugs created')
+        console.log(JSON.stringify(bugs, null, '\t'))
     })
 
     it('Submit a new valid approval proof by the second member of the group', async function () {
@@ -113,8 +100,8 @@ describe('Hackergroup', function () {
         // get the first group from the file
 
         console.log('using proof ...', group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof)
-        const result = await hackergroup.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
-        console.log('verification by hackergroup...')
+        const result = await hackerclient.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
+        console.log('verification by hackerclient...')
         console.log(result)
         expect(result.hash).to.not.null
     })
@@ -127,23 +114,9 @@ describe('Hackergroup', function () {
 
     it('Reads the events from the contract', async function () {
         const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
-        const contract = await ethers.getContractAt('HackerGroup', hackergroup.address, signer)
+        const contract = await ethers.getContractAt('HackerClient', hackerclient.address, signer)
 
-        let eventFilter = contract.filters.bugCreated()
-        let bugs = await contract.queryFilter(eventFilter)
-        expect(bugs.length).to.equal(1)
-
-        console.log('bugs created')
-        console.log(JSON.stringify(bugs, null, '\t'))
-
-        eventFilter = contract.filters.bugApproved()
-        bugs = await contract.queryFilter(eventFilter)
-        expect(bugs.length).to.equal(1)
-
-        console.log('bugs approved')
-        console.log(JSON.stringify(bugs, null, '\t'))
-
-        eventFilter = contract.filters.TokensTransferred(null)
+        let eventFilter = contract.filters.TokensTransferred(null)
         const tokens = await contract.queryFilter(eventFilter)
         expect(tokens.length).to.equal(1)
 

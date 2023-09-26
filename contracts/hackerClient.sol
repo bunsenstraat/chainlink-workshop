@@ -4,16 +4,16 @@ import {ISemaphore} from "semaphore/contracts/interfaces/ISemaphore.sol";
 import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/OwnerIsCreator.sol";
 import {IHackerGroup} from "contracts/IHackerGroup.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
-import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
-import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
+import {MockRouter} from "contracts/Router.sol";
+import {LINK} from "contracts/Link.sol";
 
 contract HackerClient is OwnerIsCreator {
     uint64 destinationChain; // The chain selector of the destination chain.
     uint64 sourceChain;
-    address hackergroup;
+    IHackerGroup hackergroup;
 
-    LinkTokenInterface linkToken;
-    IRouterClient router;
+    LINK linkToken;
+    MockRouter router;
 
     event bugCreated(uint256 externalNullifier);
 
@@ -24,6 +24,17 @@ contract HackerClient is OwnerIsCreator {
     event bugClosed(uint256 externalNullifier);
 
     event messageReceived(uint256 externalNullifier);
+
+// Event emitted when the tokens are transferred to an account on another chain.
+    event TokensTransferred(
+        bytes32 indexed messageId, // The unique ID of the message.
+        uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
+        address receiver, // The address of the receiver on the destination chain.
+        address token, // The token address that was transferred.
+        uint256 tokenAmount, // The token amount that was transferred.
+        address feeToken, // the token address used to pay CCIP fees.
+        uint256 fees // The fees paid for sending the message.
+    );
 
     // Event emitted when a message is sent to another chain.
     event MessageSent(
@@ -37,20 +48,16 @@ contract HackerClient is OwnerIsCreator {
 
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance.
 
-    constructor() {}
-
-    function setData(
-        address _router,
+    constructor(
         uint64 _destinationChainSelector,
         uint64 _sourceChain,
-        address _link,
         address _hackergroup
-    ) public {
+    ) {
         destinationChain = _destinationChainSelector;
         sourceChain = _sourceChain;
-        router = IRouterClient(_router);
-        linkToken = LinkTokenInterface(_link);
-        hackergroup = _hackergroup; // IHackerGroup(_hackergroup);
+        router = new MockRouter();
+        linkToken = new LINK();
+        hackergroup = IHackerGroup(_hackergroup); // IHackerGroup(_hackergroup);
     }
 
     event messageSent(uint256 externalNullifier);
@@ -68,7 +75,7 @@ contract HackerClient is OwnerIsCreator {
         bytes memory message = abi.encode(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
 
         if (destinationChain == sourceChain) {
-            IHackerGroup(hackergroup).receiveMessage(message);
+            hackergroup.receiveMessage(message);
             emit messageSent(externalNullifier);
             return '1';
         } else {
@@ -99,7 +106,7 @@ contract HackerClient is OwnerIsCreator {
 
             // Emit an event with message details
 
-            emit MessageSent(messageId, destinationChain, hackergroup, message, address(linkToken), fees);
+            emit messageSent(externalNullifier);
 
             // Return the message ID
             return messageId;

@@ -16,4 +16,5 @@ interface IHackerGroup {
     event messageReceived(uint256 externalNullifier);
 
     function receiveMessage(bytes memory data) external;
+
 }
