@@ -5,9 +5,9 @@ import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/O
 import {IHackerGroup} from "contracts/IHackerGroup.sol";
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
-import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
-import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
+import {MockRouter} from "contracts/Router.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
+import {CCIPBNM} from "contracts/CCIP-BnM.sol";
 
 interface ISemaphore {
     /// @dev Returns the number of tree leaves of a group.
@@ -35,7 +35,8 @@ interface ISemaphore {
 
 contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
     ISemaphore public semaphore;
-    IRouterClient router;
+    MockRouter router;
+    address token;
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees);
     enum bugState {
         NEW,
@@ -65,9 +66,14 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
 
     mapping(uint256 => Bugs) public bugs;
 
-    constructor(address semaphoreAddress, address _router) CCIPReceiver(_router) {
+    constructor(
+        address semaphoreAddress,
+        address _router,
+        address _token
+    ) CCIPReceiver(_router) {
         semaphore = ISemaphore(semaphoreAddress);
-        router = IRouterClient(_router);
+        router = new MockRouter();
+        token = _token;
     }
 
     // the externalNullifier is the CID encoded as a bigNumber, it needs to be decoded in javascript to use it.
@@ -84,7 +90,7 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         uint256[8] memory proof,
         uint64 _paymentChainSelector,
         address _receiver
-    ) private {
+    ) public {
         semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
         if (signal == 0) {
             bugs[externalNullifier] = Bugs(externalNullifier, _paymentChainSelector, _receiver, bugState.NEW, 0, 0);
@@ -93,11 +99,35 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
             bugs[externalNullifier].approveCount++;
             emit bugApproved(externalNullifier);
             emit bugClosed(externalNullifier);
-            transferTokensPayNative(bugs[externalNullifier]._paymentChainSelector,bugs[externalNullifier]._receiver, 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05, 1000000000000000);
+            transferTokensPayNative(bugs[externalNullifier]._paymentChainSelector, bugs[externalNullifier]._receiver, token, 1);
         } else if (signal == 2) {
             bugs[externalNullifier].rejectCount++;
             emit bugRejected(externalNullifier);
         }
+    }
+
+    function submitPublic(
+        uint256 groupId,
+        uint256 merkleTreeRoot,
+        uint256 signal,
+        uint256 nullifierHash,
+        uint256 externalNullifier,
+        uint256[8] memory proof,
+        uint64 _paymentChainSelector,
+        address _receiver
+    ) external {
+        submit(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof, _paymentChainSelector, _receiver);
+    }
+
+    function verifyProof(
+        uint256 groupId,
+        uint256 merkleTreeRoot,
+        uint256 signal,
+        uint256 nullifierHash,
+        uint256 externalNullifier,
+        uint256[8] memory proof
+    ) external {
+        semaphore.verifyProof(groupId, merkleTreeRoot, signal, nullifierHash, externalNullifier, proof);
     }
 
     function members(uint256 groupId) public view returns (uint256) {
@@ -164,26 +194,16 @@ contract HackerGroup is OwnerIsCreator, IHackerGroup, CCIPReceiver {
         address _token,
         uint256 _amount
     ) internal returns (bytes32 messageId) {
-        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
-        // address(0) means fees are paid in native gas
+        // Mock the implementation
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(_receiver, _token, _amount, address(0));
 
-        // Get the fee required to send the message
-        uint256 fees = router.getFee(_destinationChainSelector, evm2AnyMessage);
+        CCIPBNM cciptoken = CCIPBNM(token);
 
-        if (fees > address(this).balance) revert NotEnoughBalance(address(this).balance, fees);
+        cciptoken.transfer(_receiver, _amount);
 
-        // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
-        IERC20(_token).approve(address(router), _amount);
+        emit TokensTransferred(messageId, _destinationChainSelector, _receiver, _token, _amount, address(0), 0);
 
-        // Send the message through the router and store the returned message ID
-        messageId = router.ccipSend{value: fees}(_destinationChainSelector, evm2AnyMessage);
-
-        // Emit an event with message details
-        emit TokensTransferred(messageId, _destinationChainSelector, _receiver, _token, _amount, address(0), fees);
-
-        // Return the message ID
-        return messageId;
+        return "1";
     }
 
     /// @notice Construct a CCIP message.

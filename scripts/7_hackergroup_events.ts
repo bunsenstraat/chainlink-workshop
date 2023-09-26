@@ -5,7 +5,7 @@ import { ethers, BigNumber } from 'ethers'
 
     const signerAddress = await signer.getAddress()
 
-    const contract = await ethers.getContractAt('HackerGroup', '0x93f8dddd876c7dBE3323723500e83E202A7C96CC', signer)
+    const contract = await ethers.getContractAt('HackerGroup', '0x9a2E12340354d2532b4247da3704D2A5d73Bd189', signer)
 
     //console.log(contract.filters)
 
@@ -33,6 +33,14 @@ import { ethers, BigNumber } from 'ethers'
     console.log('message received')
     console.log(JSON.stringify(bugs, null, '\t'))
 
+
+    eventFilter = contract.filters.TokensTransferred(null)
+    bugs = await contract.queryFilter(eventFilter)
+
+    console.log('tokens transferred')
+    console.log(JSON.stringify(bugs, null, '\t'))
+    
+    /*
     const client = await ethers.getContractAt('HackerClient', '0x4a9C121080f6D9250Fc0143f41B595fD172E31bf', signer)
 
     eventFilter = client.filters.messageSent()
@@ -52,5 +60,6 @@ import { ethers, BigNumber } from 'ethers'
 
     console.log('bugs created')
     console.log(JSON.stringify(bugs, null, '\t'))
+    */
     
 })()
