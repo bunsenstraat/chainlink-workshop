@@ -1,6 +1,4 @@
-import { ethers } from 'ethers'
 import { deploy } from './helpers/deploy'
-import { CompilationResult, SourceWithTarget } from '@remixproject/plugin-api'
 ;(async () => {
     try {
         const pairing = await deploy('Pairing', [])

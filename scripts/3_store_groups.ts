@@ -1,5 +1,5 @@
 import { ethers, BigNumber } from 'ethers'
-import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types'
+import { ISemaphoreDeploymentData, IGroup, IGroupMember } from './types/types'
 ;(async () => {
     const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
     console.log(await signer.getAddress())

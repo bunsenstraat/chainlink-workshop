@@ -1,5 +1,4 @@
 import { ethers } from 'ethers'
-import { Identity } from '@semaphore-protocol/identity'
 import { ISemaphoreDeploymentData } from './types/types'
 
 const identities = []

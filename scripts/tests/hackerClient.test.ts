@@ -20,7 +20,7 @@ let _receiver
 let cid
 const router = ethers.Wallet.createRandom() // some random address uses instead of the CCIP router
 
-describe('Hackergroup', function () {
+describe('Hackerclient', function () {
     it('Deploys token', async function () {
         await remix.call('udapp', 'clearAllInstances' as any)
         CCIPBNM = await deploy('CCIPBNM', [])
@@ -80,7 +80,7 @@ describe('Hackergroup', function () {
     })
     it('Reads the events from the contract', async function () {
         const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
-        const contract = await ethers.getContractAt('HackerClient', hackerclient.address, signer)
+        const contract = await ethers.getContractAt('HackerGroup', hackergroup.address, signer)
 
         let eventFilter = contract.filters.bugCreated()
         let bugs = await contract.queryFilter(eventFilter)
@@ -114,7 +114,7 @@ describe('Hackergroup', function () {
 
     it('Reads the events from the contract', async function () {
         const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
-        const contract = await ethers.getContractAt('HackerClient', hackerclient.address, signer)
+        const contract = await ethers.getContractAt('HackerGroup', hackergroup.address, signer)
 
         let eventFilter = contract.filters.TokensTransferred(null)
         const tokens = await contract.queryFilter(eventFilter)
