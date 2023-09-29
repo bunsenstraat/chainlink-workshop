@@ -15,27 +15,6 @@ contract HackerClient is OwnerIsCreator {
     LINK linkToken;
     MockRouter router;
 
-    event bugCreated(uint256 externalNullifier);
-
-    event bugApproved(uint256 externalNullifier);
-
-    event bugRejected(uint256 externalNullifier);
-
-    event bugClosed(uint256 externalNullifier);
-
-    event messageReceived(uint256 externalNullifier);
-
-// Event emitted when the tokens are transferred to an account on another chain.
-    event TokensTransferred(
-        bytes32 indexed messageId, // The unique ID of the message.
-        uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
-        address receiver, // The address of the receiver on the destination chain.
-        address token, // The token address that was transferred.
-        uint256 tokenAmount, // The token amount that was transferred.
-        address feeToken, // the token address used to pay CCIP fees.
-        uint256 fees // The fees paid for sending the message.
-    );
-
     // Event emitted when a message is sent to another chain.
     event MessageSent(
         bytes32 indexed messageId, // The unique ID of the CCIP message.

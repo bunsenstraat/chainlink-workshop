@@ -89,7 +89,7 @@ describe('Hackergroup', function () {
         const n = ethers.BigNumber.from(ethers.utils.randomBytes(32))
         cid = BigNumberToSignal(n)
         // signal is 0, meaning we create a new bug
-        proof = await await createProofForIdendity(cid, '0', true, null, groups[0].members[0])
+        proof = await createProofForIdendity(cid, '0', true, null, groups[0].members[0])
 
         console.log('using proof ...')
         const result = await hackergroup.submit(group_id, proof.merkleTreeRoot, proof.signal, proof.nullifierHash, proof.externalNullifier, proof.proof, _paymentChainSelector, _receiver)
