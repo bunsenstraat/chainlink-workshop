@@ -156,7 +156,7 @@ describe('Hackergroup', function () {
     it('Check balance of hackergroup', async function () {
         expect(await CCIPBNM.balanceOf(hackergroup.address)).to.equal(99)
     })
-    it('gets the cids from the verified proofs', async () {
+    it('gets the cids from the verified proofs', async () => {
 
         const signer = new ethers.providers.Web3Provider(web3Provider).getSigner()
         const semaphore_deployment = await remix.call('fileManager', 'readFile', 'data/semaphore_deployment.json')
@@ -194,5 +194,25 @@ describe('Hackergroup', function () {
         }
 
     })
-    
+    it('writes bugs to file', async () => {
+        let bugs = []
+        const verified_proofs = JSON.parse(await remix.call('fileManager', 'readFile', './build/proofs_verified.json'))
+        for (let proof of verified_proofs) {
+            const cid = BigNumberToSignal(proof.args[3].hex)
+            const externalNullifier = proof.args[3].hex
+            console.log(externalNullifier)
+            // query the contract 
+            console.log('fetching ....', externalNullifier)
+            const result = await hackergroup.bugs(externalNullifier)
+            console.log(result)
+            bugs.push({
+               cid,
+               approved: result[4],
+               rejected: result[5] 
+            })
+        }
+        await remix.call('fileManager', 'setFile', './build/bugs.json', JSON.stringify(bugs, null, '\t'))
+
+    })
+
 })
