@@ -1,5 +1,3 @@
-import { deploy } from './helpers/deploy'
-import { CompilationResult, SourceWithTarget } from '@remixproject/plugin-api'
 ;(async () => {
     try {
         remix.off('solidity', 'compilationFinished')
