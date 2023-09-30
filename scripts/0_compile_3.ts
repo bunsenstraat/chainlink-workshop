@@ -8,7 +8,7 @@
             version: '0.8.4+commit.c7e474f2',
         }
         await remix.call('solidity', 'setCompilerConfig', params as any)
-        await remix.call('solidity', 'compile' as any, 'contracts/hackergroup.sol')
+        await remix.call('solidity', 'compile' as any, 'contracts/hackerClient.sol')
     }catch(e){
         console.log(e.message)
     }
