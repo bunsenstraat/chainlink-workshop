@@ -207,8 +207,8 @@ describe('Hackergroup', function () {
             console.log(result)
             bugs.push({
                cid,
-               approved: result[4],
-               rejected: result[5] 
+               approved: result[4].toNumber(),
+               rejected: result[5].toNumber()
             })
         }
         await remix.call('fileManager', 'setFile', './build/bugs.json', JSON.stringify(bugs, null, '\t'))
